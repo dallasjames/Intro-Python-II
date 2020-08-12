@@ -1,6 +1,5 @@
 from room import Room
 from player import Player
-from utils import game_help
 
 # Declare all the rooms
 
@@ -43,10 +42,9 @@ room['treasure'].s_to = room['narrow']
 def main():
     name = input("What is your name: ")
     player = Player(name, room["outside"])
+    print(player)
     # Write a loop that:
     while True:
-        print(player)
-        print(game_help())
         opt = input("Enter N to move north, E to move east, W for west, S for south or Q to quit: ")
         if opt == "Q".lower():
             print("Goodbye")
