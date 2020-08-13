@@ -1,24 +1,29 @@
 # Write a class to hold player information, e.g. what room they are in
 # currently.
-import re
+from room import Room
 
 
 class Player:
-    def __init__(self, name, current_room):
+    def __init__(self, name, current_room, inventory=[]):
         self.name = name
-        self.current_room = current_room
+        # Store current_room as a Room object
+        self.current_room: Room = current_room
+        self.inventory = inventory
 
-    def __str__(self):
-        return f"{self.name} is in the {self.current_room}"
-
-    def do(self, opt):
-        if re.compile("[nesw]|north|south|east|west").fullmatch(opt):
-            self.move(opt)
-
-    def move(self, opt):
+    def take(self, opt):
         try:
-            self.current_room = self.current_room.move(opt[0])
-            print(f"{self.name} is now in the {self.current_room.name}")
+            item_name = opt.split(" ")[1]
+            item = self.current_room.take(item_name)
+            item.get()
+            self.inventory.append(item)
+        except ValueError:
+            print(f"{item_name} wasn't found")
 
-        except:
-            print("You can't go that way")
+    def drop(self, opt):
+        try:
+            item_name = opt.split(" ")[1]
+            item = self.current_room.drop(item_name)
+            item.drop(item_name)
+            self.inventory.remove(item_name)
+        except ValueError:
+            print(f"You don't have a {item_name}")
