@@ -1,30 +1,24 @@
-from room import Room
-from player import Player
 from item import Item
+from player import Player
+from room import Room
 
 # Declare all the rooms
-
+# Dictionary of rooms mapping name to Room
 room = {
     'outside': Room("Outside Cave Entrance",
                     "North of you, the cave mount beckons"),
-
     'foyer': Room("Foyer", """Dim light filters in from the south. Dusty
 passages run north and east."""),
-
     'overlook': Room("Grand Overlook", """A steep cliff appears before you, falling
 into the darkness. Ahead to the north, a light flickers in
 the distance, but there is no way across the chasm."""),
-
     'narrow': Room("Narrow Passage", """The narrow passage bends here from west
 to north. The smell of gold permeates the air."""),
-
     'treasure': Room("Treasure Chamber", """You've found the long-lost treasure
 chamber! Sadly, it has already been completely emptied by
 earlier adventurers. The only exit is to the south."""),
 }
-
 # Link rooms together
-
 room['outside'].n_to = room['foyer']
 room['foyer'].s_to = room['outside']
 room['foyer'].n_to = room['overlook']
@@ -33,73 +27,62 @@ room['overlook'].s_to = room['foyer']
 room['narrow'].w_to = room['foyer']
 room['narrow'].n_to = room['treasure']
 room['treasure'].s_to = room['narrow']
-
-item = {
-    "sword": Item("Sword", "A nice sword that will fetch money at a pawn shop"),
-    "coins": Item("Some Coins", "$2000 worth"),
-    "dragon": Item("Dragon", "It's asleep don't worry")
-}
-
-room['outside'].give(item["sword"])
+room['outside'].items.append(Item("Knife", "Sharp thing"))
+room['outside'].items.append(Item("Potion", "Green and bubbly liquid in a glass vial"))
 #
 # Main
 #
-
 # Make a new player object that is currently in the 'outside' room.
-
-# Write a loop that:
-
 name = input("What is your name: ")
-player = Player(name, room["outside"])
+player = Player(name, room['outside'])
+# Write a loop that:
+#
 while True:
     # * Prints the current room name
     current_room = player.current_room
-    print(player)
-    print(f"{player.name} is in the {player.current_room.name}")
+    print(name, player.current_room.name)
     # * Prints the current description (the textwrap module might be useful here).
-    print(current_room.description)
-    print(current_room.__str__())
+    print(player.current_room.description)
+    # * Print items in the room
+    print("The room contains the following items:")
+    for item in current_room.items:
+        print(item)
     # * Waits for user input and decides what to do.
-    print("To move in a direction enter ('n', 's', 'e' or 'w') ")
-    print("You can also choose 't' or 'd' followed by the item to take or drop it")
-    user_input = input("Choose 'i' to see the inventory or 'q' to quit: ")
+    user_input = input("Choose a direction to move in ('n', 's', 'e', 'w') or get or take an item:\n")
     # If the user enters a cardinal direction, attempt to move to the room there.
+    # moving to a room --> setting current_room on player
     if user_input == "q":
-        print("Goodbye")
         break
-    elif user_input == "n":
-        if hasattr(current_room, "n_to"):
-            # if current_room.n_to is not None:
-            player.current_room = getattr(current_room, "n_to")
-            player.current_room = current_room.n_to
+    split_input = user_input.split()
+    print(split_input)
+    if len(split_input) == 1:
+        # move the player
+        direction_attribute = f"{user_input}_to"
+        if hasattr(current_room, direction_attribute):
+            print("Trying to move to: ", getattr(current_room, direction_attribute))
+        elif user_input == "i":
+            player.stuff()
         else:
-            print("You can't go North")
-    elif user_input == "s":
-        if hasattr(current_room, "s_to"):
-            # if current_room.n_to is not None:
-            player.current_room = getattr(current_room, "s_to")
-            player.current_room = current_room.s_to
+            print("You can't go that way")
+            continue
+    elif len(split_input) == 2:
+        item_name = split_input[1]
+        if split_input[0].lower() == "get" or "g":
+            item = current_room.get_item(item_name)
+            if item:
+                item.on_take()
+                current_room.remove_item(item)
+                player.inventory.append(item)
+            else:
+                print(f"{item_name} does not exist in room")
+        elif split_input[0].lower() == "drop" or "d":
+            item = player.inventory[split_input[1]]
+            if item:
+                item.on_drop
+                current_room.items.append(item.name, item.description)
+                player.items.remove(item)
+            else:
+                print(f"You don't have a {split_input[1]}")
         else:
-            print("You can't go South")
-    elif user_input == "e":
-        if hasattr(current_room, "e_to"):
-            # if current_room.n_to is not None:
-            player.current_room = getattr(current_room, "e_to")
-            player.current_room = current_room.e_to
-        else:
-            print("You can't go East")
-    elif user_input == "w":
-        if hasattr(current_room, "w_to"):
-            # if current_room.n_to is not None:
-            player.current_room = getattr(current_room, "w_to")
-            player.current_room = current_room.w_to
-        else:
-            print(f"You can't go West")
-    else:
-        print("\nCurrent Room: " + player.current_room.name)
-    # You can dynamically generate attributes like on the line below and then check/access them using hasattr
-    # and getattr
-
-# Print an error message if the movement isn't allowed.
-#
-# If the user enters "q", quit the game.
+            print("I didn't recognize that command")
+            continue
